@@ -2,8 +2,26 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
 import UserDashboard from './pages/UserDashboard';
 import AdminPanel from './pages/AdminPanel';
+import { getSession } from './lib/auth';
+
+function ProtectedRoute({ children, requiredRole }) {
+  const session = getSession();
+
+  if (!session?.token || !session?.user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (requiredRole && session.user.role !== requiredRole) {
+    return <Navigate to={session.user.role === 'admin' ? '/admin' : '/dashboard'} replace />;
+  }
+
+  return children;
+}
 
 function App() {
+  const session = getSession();
+  const defaultPath = session?.user?.role === 'admin' ? '/admin' : '/dashboard';
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 relative overflow-hidden font-sans">
       {/* Bright Global Background Elements */}
@@ -21,10 +39,24 @@ function App() {
       <div className="relative z-10 h-full w-full">
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Navigate to="/login" replace />} />
+            <Route path="/" element={<Navigate to={session?.token ? defaultPath : '/login'} replace />} />
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/dashboard" element={<UserDashboard />} />
-            <Route path="/admin" element={<AdminPanel />} />
+            <Route
+              path="/dashboard"
+              element={(
+                <ProtectedRoute>
+                  <UserDashboard />
+                </ProtectedRoute>
+              )}
+            />
+            <Route
+              path="/admin"
+              element={(
+                <ProtectedRoute requiredRole="admin">
+                  <AdminPanel />
+                </ProtectedRoute>
+              )}
+            />
           </Routes>
         </BrowserRouter>
       </div>

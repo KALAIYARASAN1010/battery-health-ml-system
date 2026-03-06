@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { HealthTrendGraph } from '../components/admin/HealthTrendGraph';
 import { cn } from '../lib/utils';
 import { BrandLogo } from '../components/BrandLogo';
+import { clearSession, logout } from '../lib/auth';
 
 // Mock fleet data
 const generateFleet = () => {
@@ -53,6 +54,15 @@ export default function AdminPanel() {
     const avgEfficiency = (fleet.reduce((acc, v) => acc + v.efficiency, 0) / fleet.length).toFixed(1);
     const criticalCount = fleet.filter(v => v.status === 'Critical').length;
 
+    const handleLogout = async () => {
+        try {
+            await logout();
+        } finally {
+            clearSession();
+            navigate('/login', { replace: true });
+        }
+    };
+
     return (
         <div className="min-h-screen bg-slate-50 p-4 md:p-6 lg:p-8 text-slate-800 font-sans">
             {/* Dynamic Background for Admin */}
@@ -71,7 +81,7 @@ export default function AdminPanel() {
                         </div>
                     </div>
                     <button
-                        onClick={() => navigate('/login')}
+                        onClick={handleLogout}
                         className="px-5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition-colors text-sm shadow-sm font-bold text-slate-600 hover:text-red-500"
                     >
                         Exit Terminal

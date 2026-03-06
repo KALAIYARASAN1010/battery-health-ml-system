@@ -6,6 +6,8 @@ import { MetricsGrid } from '../components/dashboard/MetricsGrid';
 import { ChartsSection } from '../components/dashboard/ChartsSection';
 import { AiInsightPanel } from '../components/dashboard/AiInsightPanel';
 import { CellMonitoringPanel } from '../components/dashboard/CellMonitoringPanel';
+import { BatteryStressIndex } from '../components/dashboard/BatteryStressIndex';
+import { EnergyLossAnalyzer } from '../components/dashboard/EnergyLossAnalyzer';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LayoutDashboard, Zap, Activity, BrainCircuit, LayoutGrid, ShieldAlert } from 'lucide-react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
@@ -156,6 +158,9 @@ export default function UserDashboard() {
                                 <div className="mt-6">
                                     <ChartsSection data={data} filterKeys={['voltage', 'current']} />
                                 </div>
+                                <div className="mt-6">
+                                    <BatteryStressIndex data={data} />
+                                </div>
                             </motion.div>
                         )}
 
@@ -172,6 +177,9 @@ export default function UserDashboard() {
                                 </div>
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                     <ChartsSection data={data} filterKeys={['voltage', 'efficiency']} />
+                                </div>
+                                <div className="mt-6">
+                                    <EnergyLossAnalyzer data={data} />
                                 </div>
                             </motion.div>
                         )}

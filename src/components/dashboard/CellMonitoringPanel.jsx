@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export function CellMonitoringPanel({ baseVoltage = 387, baseCurrent = 181 }) {
@@ -58,6 +58,27 @@ export function CellMonitoringPanel({ baseVoltage = 387, baseCurrent = 181 }) {
             glow: "shadow-[0_0_15px_rgba(59,130,246,0.3)]"
         };
     };
+
+    const agingPrediction = useMemo(() => {
+        if (!cells.length) {
+            return { weakCell: null, expectedDays: 0 };
+        }
+
+        const scored = cells.map((cell) => {
+            const tempRisk = Math.max(0, cell.temp - 30) * 2.4;
+            const voltageRisk = Math.max(0, cell.voltage - 4.12) * 180;
+            const currentRisk = Math.max(0, Math.abs(cell.current - baseCurrent) - 0.2) * 6;
+            const warningBoost = cell.status === 'warning' ? 16 : 0;
+            const score = tempRisk + voltageRisk + currentRisk + warningBoost;
+
+            return { ...cell, score };
+        });
+
+        const weakCell = scored.reduce((worst, cell) => (cell.score > worst.score ? cell : worst), scored[0]);
+        const expectedDays = Math.max(15, Math.round(120 - weakCell.score * 1.8));
+
+        return { weakCell, expectedDays };
+    }, [cells, baseCurrent]);
 
     return (
         <div className="glass-card p-8 h-full flex flex-col">
@@ -162,6 +183,29 @@ export function CellMonitoringPanel({ baseVoltage = 387, baseCurrent = 181 }) {
                     })}
                 </AnimatePresence>
             </div>
+
+            {agingPrediction.weakCell && (
+                <motion.div
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.35 }}
+                    className="mt-6 rounded-2xl border border-slate-200 bg-white/80 p-6"
+                >
+                    <h3 className="text-xl font-black text-slate-900">Cell Aging Prediction</h3>
+                    <p className="text-sm text-slate-500 mt-1">Predicted weak cell based on thermal and electrical stress</p>
+
+                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Predicted Weak Cell</p>
+                            <p className="text-2xl font-black text-slate-900">Cell #{agingPrediction.weakCell.id}</p>
+                        </div>
+                        <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Expected Degradation</p>
+                            <p className="text-2xl font-black text-slate-900">{agingPrediction.expectedDays} days</p>
+                        </div>
+                    </div>
+                </motion.div>
+            )}
         </div>
     );
 }
